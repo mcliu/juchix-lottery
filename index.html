@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>巨齿象幸运大抽奖</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #65718a;
+      --line: rgba(23, 32, 51, 0.12);
+      --panel: rgba(255, 255, 255, 0.84);
+      --pink: #ff3f7f;
+      --orange: #ff9c1b;
+      --yellow: #ffe45c;
+      --cyan: #14c8ff;
+      --green: #27d17f;
+      --violet: #7b5cff;
+      --red: #ff4b38;
+      --shadow: 0 22px 70px rgba(36, 27, 88, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 1080px;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 16% 12%, rgba(255, 228, 92, 0.95), transparent 22%),
+        radial-gradient(circle at 86% 18%, rgba(20, 200, 255, 0.62), transparent 25%),
+        linear-gradient(135deg, #fff6e3 0%, #ecfbff 45%, #fff0f8 100%);
+      overflow-x: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1280px, calc(100vw - 72px));
+      margin: 0 auto;
+      padding: 30px 0 34px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      height: 86px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 180px;
+    }
+
+    .brand-logo {
+      display: block;
+      width: auto;
+      max-width: 340px;
+      height: 86px;
+      object-fit: contain;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .text-link {
+      padding: 11px 14px;
+      border-radius: 8px;
+      color: #23405d;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+    }
+
+    .text-link:hover {
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 122px);
+      padding-top: 22px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      align-items: start;
+      justify-items: center;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      width: min(680px, calc(100vh - 250px), calc(100vw - 130px));
+      min-width: 460px;
+      isolation: isolate;
+    }
+
+    .wheel-glow {
+      position: absolute;
+      inset: 6%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #ff3f7f, #ffe45c, #14c8ff, #27d17f, #7b5cff, #ff3f7f);
+      filter: blur(28px);
+      opacity: 0.44;
+      z-index: -1;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      filter: drop-shadow(0 28px 42px rgba(58, 38, 90, 0.3));
+    }
+
+    .pointer {
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      width: 112px;
+      height: 154px;
+      transform: translateX(-50%);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .pointer::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 0;
+      height: 0;
+      transform: translateX(-50%);
+      border-left: 48px solid transparent;
+      border-right: 48px solid transparent;
+      border-top: 140px solid #ff174d;
+      filter:
+        drop-shadow(0 0 0 #fff)
+        drop-shadow(0 13px 14px rgba(255, 23, 77, 0.46))
+        drop-shadow(0 0 18px rgba(255, 255, 255, 0.82));
+    }
+
+    .pointer::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      width: 15px;
+      height: 82px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.64);
+    }
+
+    .wheel-center {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 26%, #fff 0 12%, transparent 13%),
+        linear-gradient(145deg, #ffef7a, #ff9d16 54%, #ff405e);
+      box-shadow:
+        inset 0 0 0 10px rgba(255, 255, 255, 0.82),
+        0 16px 32px rgba(255, 80, 55, 0.3);
+      z-index: 3;
+    }
+
+    .wheel-center span {
+      width: 104px;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      text-shadow: 0 2px 5px rgba(139, 44, 0, 0.26);
+    }
+
+    .draw-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 260px;
+      height: 64px;
+      margin: 0;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 23px;
+      font-weight: 900;
+      text-decoration: none;
+      background: linear-gradient(135deg, #ff244f, #ff8c1a 52%, #ffc928);
+      box-shadow: 0 16px 28px rgba(255, 82, 48, 0.34);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .draw-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 34px rgba(255, 82, 48, 0.42);
+    }
+
+    .admin-panel h2 {
+      margin: 0 0 14px;
+      font-size: 23px;
+      letter-spacing: 0;
+    }
+
+    .prize-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .prize-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .prize-name {
+      font-weight: 800;
+    }
+
+    .prize-percent {
+      flex: 0 0 auto;
+      color: #ff244f;
+      font-weight: 900;
+    }
+
+    .history {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .history h3 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      max-height: 230px;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      list-style: none;
+    }
+
+    .history-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      color: #4c5870;
+      border-bottom: 1px dashed rgba(23, 32, 51, 0.13);
+      font-size: 14px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 22, 36, 0.46);
+      z-index: 20;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .fireworks-layer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 28;
+    }
+
+    .fireworks-layer.show {
+      display: block;
+    }
+
+    .firework {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background: var(--color);
+      box-shadow: 0 0 16px var(--color);
+      animation: firework-burst var(--duration) ease-out forwards;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes firework-burst {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(0.8);
+      }
+      76% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) scale(1.2);
+      }
+    }
+
+    .dialog {
+      width: min(430px, 100%);
+      padding: 28px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 28px 82px rgba(0, 0, 0, 0.24);
+    }
+
+    .dialog h2 {
+      margin: 0 0 10px;
+      font-size: 26px;
+    }
+
+    .dialog p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      color: #344055;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .field input,
+    .admin-table input {
+      width: 100%;
+      height: 43px;
+      padding: 0 12px;
+      border: 1px solid rgba(23, 32, 51, 0.18);
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+    }
+
+    .field input:focus,
+    .admin-table input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(20, 200, 255, 0.18);
+    }
+
+    .dialog-actions,
+    .admin-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      height: 42px;
+      padding: 0 16px;
+      border-radius: 8px;
+      font-weight: 900;
+      background: #eaf0f7;
+      color: #25324a;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #14c8ff, #27d17f);
+      box-shadow: 0 10px 20px rgba(20, 200, 255, 0.22);
+    }
+
+    .btn.hot {
+      color: #fff;
+      background: linear-gradient(135deg, #ff244f, #ff9c1b);
+      box-shadow: 0 10px 20px rgba(255, 73, 55, 0.24);
+    }
+
+    .result-prize {
+      margin: 10px 0 18px;
+      padding: 18px;
+      border-radius: 8px;
+      color: #fff;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ff244f, #7b5cff 48%, #14c8ff);
+    }
+
+    .admin-drawer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 18;
+    }
+
+    .admin-drawer.show {
+      display: block;
+    }
+
+    .admin-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 22, 36, 0.38);
+    }
+
+    .admin-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 560px;
+      max-width: calc(100vw - 40px);
+      height: 100%;
+      padding: 28px;
+      overflow: auto;
+      background: #fbfdff;
+      box-shadow: -22px 0 58px rgba(17, 24, 39, 0.22);
+    }
+
+    .admin-intro {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+    }
+
+    .admin-table th {
+      padding: 0 8px 2px;
+      color: #59667d;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .admin-table td {
+      padding: 0 6px;
+      vertical-align: middle;
+    }
+
+    .admin-table td:first-child {
+      width: 66%;
+    }
+
+    .admin-table td:nth-child(2) {
+      width: 22%;
+    }
+
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1;
+      background: #ff4b38;
+    }
+
+    .admin-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .admin-total {
+      margin: 12px 6px 0;
+      color: #263348;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      display: none;
+      min-width: 220px;
+      padding: 12px 16px;
+      transform: translateX(-50%);
+      border-radius: 8px;
+      color: #fff;
+      text-align: center;
+      font-weight: 900;
+      background: rgba(23, 32, 51, 0.9);
+      z-index: 30;
+    }
+
+    .toast.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="logo.png" alt="巨齿象">
+      </div>
+      <nav class="nav-actions">
+        <a class="text-link" href="#" id="reshuffleLink">重排转盘</a>
+        <a class="text-link" href="#" id="adminLink">后台设置</a>
+      </nav>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="wheel-wrap" aria-label="抽奖转盘">
+          <div class="wheel-glow"></div>
+          <canvas id="wheelCanvas" width="900" height="900"></canvas>
+          <div class="pointer" aria-hidden="true"></div>
+          <div class="wheel-center"><span>幸运<br>抽奖</span></div>
+        </div>
+        <a href="#" class="draw-link" id="drawLink">幸运大抽奖</a>
+      </div>
+    </section>
+  </main>
+
+  <section class="modal" id="nameModal" aria-modal="true" role="dialog">
+    <div class="dialog">
+      <h2>请输入抽奖姓名</h2>
+      <p>点击确定后，转盘会自动开始旋转。</p>
+      <div class="field">
+        <label for="playerName">姓名</label>
+        <input id="playerName" type="text" maxlength="24" autocomplete="off" placeholder="例如：张三">
+      </div>
+      <div class="dialog-actions">
+        <button class="btn" type="button" data-close="nameModal">取消</button>
+        <button class="btn hot" type="button" id="startDrawBtn">确定</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="modal" id="loginModal" aria-modal="true" role="dialog">
+    <form class="dialog" id="loginForm">
+      <h2>后台登录</h2>
+      <p>登录后可修改中奖项和中奖百分比，保存后前台转盘会立即更新。</p>
+      <div class="field">
+        <label for="adminUser">用户名</label>
+        <input id="adminUser" type="text" autocomplete="username" placeholder="请输入用户名">
+      </div>
+      <div class="field">
+        <label for="adminPass">密码</label>
+        <input id="adminPass" type="password" autocomplete="current-password" placeholder="请输入密码">
+      </div>
+      <div class="dialog-actions">
+        <button class="btn" type="button" data-close="loginModal">取消</button>
+        <button class="btn primary" type="button" id="loginBtn">登录</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="modal" id="resultModal" aria-modal="true" role="dialog">
+    <div class="dialog">
+      <h2 id="resultTitle">恭喜中奖</h2>
+      <div class="result-prize" id="resultPrize">奶茶一份</div>
+      <p id="resultText">请联系工作人员兑奖。</p>
+      <div class="dialog-actions">
+        <button class="btn hot" type="button" data-close="resultModal">知道了</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="fireworks-layer" id="fireworksLayer" aria-hidden="true"></div>
+
+  <aside class="admin-drawer" id="adminDrawer">
+    <div class="admin-backdrop" id="adminBackdrop"></div>
+    <div class="admin-panel">
+      <h2>中奖后台</h2>
+      <p class="admin-intro">每一行是一个中奖项。百分比合计需为100，10%表示约100次中有10次中奖机会；每个奖项会在转盘上展示2次。</p>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>中奖项</th>
+            <th>百分比</th>
+            <th>删除</th>
+          </tr>
+        </thead>
+        <tbody id="adminRows"></tbody>
+      </table>
+      <p class="admin-total" id="adminTotal">当前合计：100%</p>
+      <div class="admin-actions">
+        <button class="btn" type="button" id="addPrizeBtn">新增奖项</button>
+        <button class="btn primary" type="button" id="savePrizeBtn">保存配置</button>
+      </div>
+      <div class="history">
+        <h3>中奖记录</h3>
+        <ul class="history-list" id="adminHistoryList"></ul>
+      </div>
+      <p class="admin-note">默认后台用户名：juchix；密码：Jcx888888。配置保存在当前浏览器本地。</p>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DEFAULT_PRIZES = [
+      { name: "100元现金红包", percent: 5 },
+      { name: "300元现金红包", percent: 15 },
+      { name: "10元现金红包", percent: 30 },
+      { name: "奶茶一份", percent: 40 },
+      { name: "带薪休假一天", percent: 10 }
+    ];
+
+    const STORAGE_KEY = "juchixLotteryConfig";
+    const HISTORY_KEY = "juchixLotteryHistory";
+    const COLORS = ["#ff3f7f", "#ffe45c", "#14c8ff", "#27d17f", "#7b5cff", "#ff9c1b", "#ff4b38", "#37e1d3"];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    const drawLink = document.getElementById("drawLink");
+    const reshuffleLink = document.getElementById("reshuffleLink");
+    const adminLink = document.getElementById("adminLink");
+    const nameModal = document.getElementById("nameModal");
+    const loginModal = document.getElementById("loginModal");
+    const resultModal = document.getElementById("resultModal");
+    const adminDrawer = document.getElementById("adminDrawer");
+    const adminRows = document.getElementById("adminRows");
+    const playerName = document.getElementById("playerName");
+    const adminUser = document.getElementById("adminUser");
+    const adminPass = document.getElementById("adminPass");
+    const adminHistoryList = document.getElementById("adminHistoryList");
+    const adminTotal = document.getElementById("adminTotal");
+    const fireworksLayer = document.getElementById("fireworksLayer");
+    const toast = document.getElementById("toast");
+
+    let prizes = loadPrizes();
+    let wheelSegments = buildWheelSegments(prizes);
+    let rotation = 0;
+    let spinning = false;
+    let activePlayer = "";
+
+    function loadPrizes() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (Array.isArray(saved) && saved.length) {
+          const sanitized = sanitizePrizes(saved);
+          if (isPercentTotalValid(sanitized)) {
+            return sanitized;
+          }
+        }
+      } catch (error) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      return DEFAULT_PRIZES.map((item) => ({ ...item }));
+    }
+
+    function sanitizePrizes(items) {
+      return items
+        .map((item) => ({
+          name: String(item.name || "").trim(),
+          percent: Math.max(0, Number(item.percent) || 0)
+        }))
+        .filter((item) => item.name);
+    }
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function buildWheelSegments(source) {
+      const segments = [];
+      source.forEach((prize) => {
+        for (let count = 0; count < 2; count += 1) {
+          segments.push({ ...prize });
+        }
+      });
+      return shuffle(segments.length ? segments : DEFAULT_PRIZES);
+    }
+
+    function drawWheel() {
+      const size = canvas.width;
+      const center = size / 2;
+      const radius = center - 28;
+      const arc = (Math.PI * 2) / wheelSegments.length;
+
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate((rotation * Math.PI) / 180);
+
+      wheelSegments.forEach((segment, index) => {
+        const start = -Math.PI / 2 + index * arc;
+        const end = start + arc;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = COLORS[index % COLORS.length];
+        ctx.fill();
+
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.84)";
+        ctx.stroke();
+
+        ctx.save();
+        ctx.rotate(start + arc / 2);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = isLightColor(COLORS[index % COLORS.length]) ? "#172033" : "#fff";
+        ctx.font = "900 29px 'PingFang SC', 'Microsoft YaHei', Arial";
+        wrapWheelText(segment.name, radius - 42, 0, arc);
+        ctx.restore();
+      });
+
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      for (let index = 0; index < wheelSegments.length; index += 1) {
+        const angle = -Math.PI / 2 + index * arc;
+        ctx.save();
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.arc(0, -radius + 18, 7, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff7a9";
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function wrapWheelText(text, x, y) {
+      const chars = Array.from(text);
+      const lineLength = text.length > 8 ? 5 : 6;
+      const lines = [];
+      for (let index = 0; index < chars.length; index += lineLength) {
+        lines.push(chars.slice(index, index + lineLength).join(""));
+      }
+      const startY = y - ((lines.length - 1) * 18);
+      lines.forEach((line, index) => {
+        ctx.fillText(line, x, startY + index * 36);
+      });
+    }
+
+    function isLightColor(hex) {
+      const value = hex.replace("#", "");
+      const red = parseInt(value.slice(0, 2), 16);
+      const green = parseInt(value.slice(2, 4), 16);
+      const blue = parseInt(value.slice(4, 6), 16);
+      return red * 0.299 + green * 0.587 + blue * 0.114 > 180;
+    }
+
+    function renderHistory() {
+      if (!adminHistoryList) {
+        return;
+      }
+      const history = loadHistory();
+      adminHistoryList.innerHTML = "";
+      if (!history.length) {
+        const li = document.createElement("li");
+        li.className = "empty";
+        li.textContent = "暂无中奖记录";
+        adminHistoryList.appendChild(li);
+        return;
+      }
+      history.slice(0, 20).forEach((item) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span></span><strong></strong>`;
+        li.querySelector("span").textContent = `${item.name} · ${item.time}`;
+        li.querySelector("strong").textContent = item.prize;
+        adminHistoryList.appendChild(li);
+      });
+    }
+
+    function formatPercent(value) {
+      return Number(value).toFixed(Number.isInteger(Number(value)) ? 0 : 1);
+    }
+
+    function openModal(modal) {
+      modal.classList.add("show");
+    }
+
+    function closeModal(modal) {
+      modal.classList.remove("show");
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function choosePrize() {
+      const valid = prizes.filter((prize) => prize.percent > 0);
+      if (!valid.length) {
+        return prizes[0];
+      }
+
+      let ticket = Math.random() * 100;
+
+      for (const prize of valid) {
+        ticket -= prize.percent;
+        if (ticket <= 0) {
+          return prize;
+        }
+      }
+      return valid[valid.length - 1];
+    }
+
+    function normalizeDegrees(value) {
+      return ((value % 360) + 360) % 360;
+    }
+
+    function getPointedSegmentIndex(finalRotation, segmentCount) {
+      const arcDegrees = 360 / segmentCount;
+      const wheelAngleAtPointer = normalizeDegrees(-finalRotation);
+      return Math.min(segmentCount - 1, Math.floor(wheelAngleAtPointer / arcDegrees));
+    }
+
+    function getTargetRotationForSegment(segmentIndex, currentRotation, segmentCount) {
+      const arcDegrees = 360 / segmentCount;
+      const targetCenter = segmentIndex * arcDegrees + arcDegrees / 2;
+      const targetRotation = -targetCenter;
+      const current = normalizeDegrees(currentRotation);
+      const delta = normalizeDegrees(targetRotation - current) + 360 * (6 + Math.floor(Math.random() * 3));
+      return {
+        rotation: currentRotation + delta,
+        delta,
+        distanceFromBoundary: arcDegrees / 2
+      };
+    }
+
+    function getSpinDuration() {
+      return 10000 + Math.random() * 5000;
+    }
+
+    function realisticSpinEase(progress) {
+      if (progress < 0.5) {
+        return 4 * progress * progress * progress;
+      }
+      return 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    }
+
+    function spinForPrize(prize) {
+      const matchingIndexes = wheelSegments
+        .map((segment, index) => (segment.name === prize.name ? index : -1))
+        .filter((index) => index >= 0);
+      const segmentIndex = matchingIndexes[Math.floor(Math.random() * matchingIndexes.length)];
+      const startRotation = rotation;
+      const target = getTargetRotationForSegment(segmentIndex, rotation, wheelSegments.length);
+      const endRotation = target.rotation;
+      const duration = getSpinDuration();
+      const startTime = performance.now();
+      spinning = true;
+
+      function animate(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = realisticSpinEase(progress);
+        rotation = startRotation + (endRotation - startRotation) * eased;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        rotation = endRotation % 360;
+        drawWheel();
+        spinning = false;
+        const pointedSegment = wheelSegments[getPointedSegmentIndex(rotation, wheelSegments.length)];
+        const finalPrizeName = pointedSegment ? pointedSegment.name : prize.name;
+        recordWin(activePlayer, finalPrizeName);
+        showResult(activePlayer, finalPrizeName);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function startFireworks() {
+      if (!fireworksLayer) {
+        return;
+      }
+      fireworksLayer.innerHTML = "";
+      fireworksLayer.classList.add("show");
+      const colors = ["#ff244f", "#ffe45c", "#14c8ff", "#27d17f", "#7b5cff", "#ff9c1b", "#ffffff"];
+      const burstCount = 8;
+      const particlesPerBurst = 22;
+
+      for (let burst = 0; burst < burstCount; burst += 1) {
+        const x = 14 + Math.random() * 72;
+        const y = 16 + Math.random() * 48;
+        for (let index = 0; index < particlesPerBurst; index += 1) {
+          const particle = document.createElement("span");
+          particle.className = "firework";
+          particle.style.setProperty("--x", `${x}%`);
+          particle.style.setProperty("--y", `${y}%`);
+          particle.style.setProperty("--angle", `${(360 / particlesPerBurst) * index + Math.random() * 10}deg`);
+          particle.style.setProperty("--distance", `${70 + Math.random() * 95}px`);
+          particle.style.setProperty("--size", `${4 + Math.random() * 6}px`);
+          particle.style.setProperty("--duration", `${820 + Math.random() * 620}ms`);
+          particle.style.setProperty("--color", colors[Math.floor(Math.random() * colors.length)]);
+          particle.style.animationDelay = `${burst * 420 + Math.random() * 180}ms`;
+          fireworksLayer.appendChild(particle);
+        }
+      }
+
+      window.clearTimeout(startFireworks.timer);
+      startFireworks.timer = window.setTimeout(() => {
+        fireworksLayer.classList.remove("show");
+        fireworksLayer.innerHTML = "";
+      }, 5000);
+    }
+
+    function showResult(name, prizeName) {
+      document.getElementById("resultTitle").textContent = `恭喜 ${name}`;
+      document.getElementById("resultPrize").textContent = prizeName;
+      document.getElementById("resultText").textContent = "请联系工作人员兑奖。";
+      renderHistory();
+      openModal(resultModal);
+      startFireworks();
+    }
+
+    function loadHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem(HISTORY_KEY));
+        return Array.isArray(history) ? history : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function recordWin(name, prizeName) {
+      const history = loadHistory();
+      const now = new Date();
+      history.unshift({
+        name,
+        prize: prizeName,
+        time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 30)));
+    }
+
+    function renderAdminRows() {
+      adminRows.innerHTML = "";
+      prizes.forEach((prize) => appendAdminRow(prize));
+      renderAdminTotal();
+    }
+
+    function appendAdminRow(prize = { name: "", percent: 0 }) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="text" class="admin-name" maxlength="32" placeholder="中奖项"></td>
+        <td><input type="number" class="admin-percent" min="0" step="0.1" placeholder="0"></td>
+        <td><button type="button" class="icon-btn" title="删除">×</button></td>
+      `;
+      tr.querySelector(".admin-name").value = prize.name;
+      tr.querySelector(".admin-percent").value = prize.percent;
+      tr.querySelector(".admin-name").addEventListener("input", renderAdminTotal);
+      tr.querySelector(".admin-percent").addEventListener("input", renderAdminTotal);
+      tr.querySelector(".icon-btn").addEventListener("click", () => {
+        tr.remove();
+        renderAdminTotal();
+      });
+      adminRows.appendChild(tr);
+      renderAdminTotal();
+    }
+
+    function getAdminPrizes() {
+      const rows = Array.from(adminRows.querySelectorAll("tr"));
+      return rows
+        .map((row) => ({
+          name: row.querySelector(".admin-name").value.trim(),
+          percent: Number(row.querySelector(".admin-percent").value)
+        }))
+        .filter((item) => item.name && Number.isFinite(item.percent) && item.percent >= 0);
+    }
+
+    function getPercentTotal(items) {
+      return items.reduce((sum, item) => sum + item.percent, 0);
+    }
+
+    function isPercentTotalValid(items) {
+      return Math.abs(getPercentTotal(items) - 100) < 0.01;
+    }
+
+    function renderAdminTotal() {
+      if (!adminTotal) {
+        return;
+      }
+      const total = getPercentTotal(getAdminPrizes());
+      adminTotal.textContent = `当前合计：${formatPercent(total)}%`;
+      adminTotal.style.color = Math.abs(total - 100) < 0.01 ? "#27a865" : "#ff244f";
+    }
+
+    function saveAdminConfig() {
+      const next = getAdminPrizes();
+
+      if (!next.length) {
+        showToast("请至少保留一个有效奖项");
+        return;
+      }
+
+      if (!isPercentTotalValid(next)) {
+        showToast("中奖百分比合计必须为100%");
+        renderAdminTotal();
+        return;
+      }
+
+      prizes = next;
+      wheelSegments = buildWheelSegments(prizes);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prizes));
+      drawWheel();
+      showToast("配置已保存，转盘已更新");
+    }
+
+    drawLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (spinning) {
+        showToast("转盘正在旋转");
+        return;
+      }
+      playerName.value = "";
+      openModal(nameModal);
+      setTimeout(() => playerName.focus(), 50);
+    });
+
+    reshuffleLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (spinning) {
+        showToast("转盘正在旋转");
+        return;
+      }
+      wheelSegments = buildWheelSegments(prizes);
+      rotation = 0;
+      drawWheel();
+      showToast("奖项排列已刷新");
+    });
+
+    adminLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      adminUser.value = "";
+      adminPass.value = "";
+      openModal(loginModal);
+      setTimeout(() => adminUser.focus(), 50);
+    });
+
+    document.getElementById("startDrawBtn").addEventListener("click", () => {
+      const name = playerName.value.trim();
+      if (!name) {
+        showToast("请输入姓名");
+        playerName.focus();
+        return;
+      }
+      activePlayer = name;
+      closeModal(nameModal);
+      spinForPrize(choosePrize());
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      if (adminUser.value.trim() === "juchix" && adminPass.value === "Jcx888888") {
+        closeModal(loginModal);
+        renderAdminRows();
+        renderHistory();
+        adminDrawer.classList.add("show");
+        return;
+      }
+      showToast("用户名或密码错误");
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", (event) => event.preventDefault());
+    document.getElementById("addPrizeBtn").addEventListener("click", () => appendAdminRow({ name: "新奖项", percent: 0 }));
+    document.getElementById("savePrizeBtn").addEventListener("click", saveAdminConfig);
+    document.getElementById("adminBackdrop").addEventListener("click", () => adminDrawer.classList.remove("show"));
+
+    document.querySelectorAll("[data-close]").forEach((button) => {
+      button.addEventListener("click", () => closeModal(document.getElementById(button.dataset.close)));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && nameModal.classList.contains("show")) {
+        document.getElementById("startDrawBtn").click();
+      }
+      if (event.key === "Enter" && loginModal.classList.contains("show")) {
+        document.getElementById("loginBtn").click();
+      }
+      if (event.key === "Escape") {
+        [nameModal, loginModal, resultModal].forEach(closeModal);
+        adminDrawer.classList.remove("show");
+      }
+    });
+
+    renderHistory();
+    drawWheel();
+  </script>
+</body>
+</html>
