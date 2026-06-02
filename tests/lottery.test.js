@@ -5,7 +5,10 @@ const vm = require("vm");
 
 const htmlPath = path.join(__dirname, "..", "index.html");
 const html = fs.readFileSync(htmlPath, "utf8");
+const authConfigPath = path.join(__dirname, "..", "auth-config.js");
+const authConfig = fs.readFileSync(authConfigPath, "utf8");
 const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+const legacyPlainPassword = ["Jcx", "888888"].join("");
 
 function createElement() {
   const element = {
@@ -80,6 +83,10 @@ function runPageScript() {
     Date,
     JSON,
     window: {
+      JUCHIX_AUTH_CONFIG: {
+        username: "juchix",
+        passwordHash: "ad18d99ee2c661abbac4c137ad435df6b8fc303f720d0bc2511cf765c5e9f08a"
+      },
       clearTimeout() {},
       setTimeout() {}
     },
@@ -96,6 +103,9 @@ function runPageScript() {
 assert(!html.includes("Mammoth Lucky Draw"), "front page should remove English hero label");
 assert(!html.includes("点击一次，转出今天的好运。"), "front page should remove hero heading");
 assert(!html.includes("<aside class=\"side-panel\">"), "front page should not show current prizes/history panel");
+assert(!html.includes(legacyPlainPassword), "admin password must not be stored as plaintext in page source");
+assert(!authConfig.includes(legacyPlainPassword), "admin config must store a password hash instead of plaintext");
+assert(authConfig.includes("passwordHash"), "admin config should expose a password hash");
 assert(html.includes("logo.png"), "page should reference the supplied logo asset path");
 assert(html.includes("fireworksLayer"), "result should include a fireworks layer");
 
@@ -133,4 +143,27 @@ assert(context.realisticSpinEase(0.5) > 0.42, "spin should move decisively throu
 assert(context.realisticSpinEase(0.9) > 0.95, "spin should slow near the end after most rotation is complete");
 assert.strictEqual(context.realisticSpinEase(1), 1, "spin easing should finish exactly");
 
-console.log("lottery behavior tests passed");
+Promise.resolve()
+  .then(async () => {
+    assert.strictEqual(
+      context.sha256Ascii(legacyPlainPassword),
+      "ad18d99ee2c661abbac4c137ad435df6b8fc303f720d0bc2511cf765c5e9f08a",
+      "password helper should produce the stored SHA-256 digest"
+    );
+    assert.strictEqual(
+      await context.isAdminCredentialValid("juchix", legacyPlainPassword),
+      true,
+      "configured admin credentials should open the backend"
+    );
+    assert.strictEqual(
+      await context.isAdminCredentialValid("juchix", "wrong-password"),
+      false,
+      "wrong admin password should be rejected"
+    );
+
+    console.log("lottery behavior tests passed");
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
