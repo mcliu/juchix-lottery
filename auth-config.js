@@ -1,4 +1,4 @@
 window.JUCHIX_AUTH_CONFIG = {
-  username: "juchix",
-  passwordHash: "ad18d99ee2c661abbac4c137ad435df6b8fc303f720d0bc2511cf765c5e9f08a"
+  username: "admin",
+  passwordHash: "907b1a393b08854c68249bd906ba0813df46e3826ea045b6d40fa5d25dcf726a"
 };
